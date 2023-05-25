@@ -1,3 +1,4 @@
-pandas
 langchain
 openai
+pandas
+pydantic
