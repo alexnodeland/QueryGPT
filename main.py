@@ -1,7 +1,7 @@
 import os
 import pandas as pd
-from langchain.chat_models import ChatOpenAI
 from langchain import LLMChain
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
@@ -14,11 +14,12 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 chat = ChatOpenAI(model=MODEL, temperature=TEMPERATURE)
 
 # Build prompt
-template =  "You are a bot that optimizes {query_language} queries, improving given queries to be as efficient as possible. " + \
-    "For each query, provide an optimized version and any relevant notes about the optimization process. " + \
-    "The output should be stored in a CSV file with the following columns: 'query_optimized', and 'note'. " + \
-    "Your output should include only the CSV file. It should not include any other comments or text. " + \
-    "Do not shorten or concatenate your answer with a '...'. Share the output in its complete entirety."
+template = "As an AI assistant, your task is to optimize database queries. Given a {query_language} query, " + \
+    "your job is to provide an optimized version of the query and any relevant notes about the optimization process. " + \
+    "Please structure your response as a JSON object, following this format: " + \
+    "{ 'query_optimized': 'Your optimized query here', 'note': 'Your notes about the optimization process here' }. " + \
+    "Ensure your response is complete and does not include any extraneous comments or text. " + \
+    "Avoid shortening or truncating your answer. Share the output in its complete form."
 
 system_message_prompt = SystemMessagePromptTemplate.from_template(template)
 
@@ -44,7 +45,6 @@ queries_df = pd.read_csv(QUERIES_PATH)
 queries = queries_df['query'].tolist()
 files = queries_df['file'].tolist()
 
-
 # Chunk queries into groups of CHUNK_SIZE
 query_chunks = [queries[i:i + CHUNK_SIZE] for i in range(0, len(queries), CHUNK_SIZE)]
 file_chunks = [files[i:i + CHUNK_SIZE] for i in range(0, len(files), CHUNK_SIZE)]
@@ -53,5 +53,5 @@ for query_chunk, file_chunk in zip(query_chunks, file_chunks):
     # Format queries as a line delimited list
     queries_formatted = "\n".join(query_chunk)
     chain = LLMChain(llm=chat, prompt=chat_prompt)
-    output = chain.run(query_language=QUERY_LANGUAGE, example_input=example_input, example_output=example_output, queries=queries_formatted)
-    print(output)
+output = chain.run(query_language=QUERY_LANGUAGE, example_input=example_input, example_output=example_output, queries=queries_formatted, format_instructions=format_instructions)
+print(output)
