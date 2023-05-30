@@ -10,6 +10,7 @@ from langchain.prompts.chat import (
 from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
 from pydantic import BaseModel, Field
 from typing import List
+import json
 from config import MODEL, TEMPERATURE, EXAMPLE_PATH, QUERY_LANGUAGE, QUERIES_PATH, CHUNK_SIZE, OUTPUT_PATH
 
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
@@ -63,7 +64,12 @@ example_note_b = str(example['note'][0])
 print("Setting prompt variables...")
 example_input = '"'+ example_query_a +'"\n\n' + \
     '"'+ example_query_b +'"'
-example_output = '[{"query_optimized": "'+ example_query_optimized_a +'", "note": "'+ example_note_a +'"}, {"query_optimized": "'+ example_query_optimized_b +'", "note": "'+ example_note_b +'"}]'
+example_output = json.dumps({
+    "queries": [
+        {"query_optimized": example_query_optimized_a, "note": example_note_a},
+        {"query_optimized": example_query_optimized_b, "note": example_note_b}
+    ]
+})
 
 
 # Load queries from CSV
@@ -97,8 +103,9 @@ for query_chunk, file_chunk in zip(query_chunks, file_chunks):
         print("\nParsed output with fixer")
     print('\n', output_parsed, '\n')
     # For each result in the output, append a new row to the DataFrame
-    for query, file, result in zip(query_chunk, file_chunk, output_parsed):
-        query_optimized, note = result
+    for query, file, output_parsed in zip(query_chunk, file_chunk, output_parsed.queries):
+        query_optimized = output_parsed.query_optimized
+        note = output_parsed.note
         new_row = pd.DataFrame({
             "query": [query],
             "file": [file],
@@ -106,6 +113,7 @@ for query_chunk, file_chunk in zip(query_chunks, file_chunks):
             "note": [note]
         })
         output_df = pd.concat([output_df, new_row], ignore_index=True)
+
 
 # Save the DataFrame to a CSV file
 output_df.to_csv(OUTPUT_PATH, index=False)
