@@ -9,6 +9,7 @@ from langchain.prompts.chat import (
 )
 from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
 from pydantic import BaseModel, Field
+from typing import List
 from config import MODEL, TEMPERATURE, EXAMPLE_PATH, QUERY_LANGUAGE, QUERIES_PATH, CHUNK_SIZE, OUTPUT_PATH
 
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
@@ -17,16 +18,18 @@ print("Starting script...")
 chat = ChatOpenAI(model=MODEL, temperature=TEMPERATURE)
 print("Loaded model successfully")
 # Define your desired data structure.
-class OptimizedQueries(BaseModel):
+class OptimizedQuery(BaseModel):
     query_optimized: str = Field(description="optimized database query")
     note: str = Field(description="notes about optimization process")
+class OptimizedQueries(BaseModel):
+    queries: List[OptimizedQuery] = Field(description="list of optimized database queries")
 # Set up a parser + inject instructions into the prompt template.
 print("Setting up parser...")
 parser = PydanticOutputParser(pydantic_object=OptimizedQueries)
 format_instructions = parser.get_format_instructions()
-print("Parser set up successfully, format instructions: \n", format_instructions)
+print("Parser set up successfully, format instructions: \n\n", format_instructions)
 fixing_parser = OutputFixingParser.from_llm(parser=parser, llm=ChatOpenAI())
-print("Fixing parser set up successfully")
+print("\nFixing parser set up successfully")
 
 # Build prompt
 template = (
@@ -45,9 +48,9 @@ example_ai = SystemMessagePromptTemplate.from_template("{example_output}", addit
 human_template = "{queries}"
 human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
 chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, example_human, example_ai, human_message_prompt])
-print("Prompt built successfully, prompt: \n", chat_prompt)
+print("Prompt built successfully, prompt: \n\n", chat_prompt)
 # Load prompt example
-print("Loading prompt example...")
+print("\nLoading prompt example...")
 example = pd.read_csv(EXAMPLE_PATH)
 example_query_a = str(example['query'][0])
 example_query_optimized_a = str(example['query_optimized'][0])
@@ -80,18 +83,18 @@ file_chunks = [files[i:i + CHUNK_SIZE] for i in range(0, len(files), CHUNK_SIZE)
 for query_chunk, file_chunk in zip(query_chunks, file_chunks):
     # Format queries as a line delimited list
     queries_formatted = "\n\n".join(query_chunk)
-    print("Formatted queries successfully: ", queries_formatted)
+    print("Formatted queries successfully: \n\n", queries_formatted)
     chain = LLMChain(llm=chat, prompt=chat_prompt)
-    print("Created chain successfully, running queries...")
+    print("\nCreated chain successfully, running queries...")
     output = chain.run(query_language=QUERY_LANGUAGE, format_instructions=format_instructions, example_input=example_input, example_output=example_output, queries=queries_formatted)
-    print("Ran queries successfully, parsing output...")
+    print("Ran queries successfully, parsing output...\n")
     try:
         output_parsed = parser.parse(output)
-        print("Parsed output successfully")
+        print("\nParsed output successfully")
     except Exception as e:
         print(e)
         output_parsed = fixing_parser.parse(output)
-        print("Parsed output with fixer")
+        print("\nParsed output with fixer")
     print('\n', output_parsed, '\n')
     # For each result in the output, append a new row to the DataFrame
     for query, file, result in zip(query_chunk, file_chunk, output_parsed):
