@@ -1,8 +1,11 @@
+import os
+
 """
 This file contains all the configuration variables for the project.
 """
 
 # OpenAI Configuration
+OPENAI_API_KEY= os.getenv("OPENAI_API_KEY")
 MODEL = "gpt-4"
 TEMPERATURE = 0.9
 
