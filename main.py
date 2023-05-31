@@ -11,11 +11,14 @@ from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
 from pydantic import BaseModel, Field
 from typing import List
 import json
-from config import QUERY_MODEL, QUERY_TEMPERATURE, EXAMPLE_PATH, QUERY_LANGUAGE, QUERIES_PATH, CHUNK_SIZE, OUTPUT_PATH, OPENAI_API_KEY
+from config import QUERY_MODEL, QUERY_TEMPERATURE, PARSER_MODEL, PARSER_TEMPERATURE, EXAMPLE_PATH, QUERY_LANGUAGE, QUERIES_PATH, CHUNK_SIZE, OUTPUT_PATH, OPENAI_API_KEY
 
-print("Starting script...")
-chat = ChatOpenAI(model=QUERY_MODEL, temperature=QUERY_TEMPERATURE)
-print("Loaded model successfully")
+def initializeLLMs(query_model, query_temperature, parser_model, parser_temperature):
+    query_llm = ChatOpenAI(model=QUERY_MODEL, temperature=QUERY_TEMPERATURE)
+#   parser_llm = ChatOpenAI(model=PARSER_MODEL, temperature=PARSER_TEMPERATURE)
+    parser_llm = ChatOpenAI()
+    return query_llm, parser_llm
+
 # Define your desired data structure.
 class OptimizedQuery(BaseModel):
     query_optimized: str = Field(description="optimized database query")
@@ -115,3 +118,13 @@ for query_chunk, file_chunk in zip(query_chunks, file_chunks):
 
 # Save the DataFrame to a CSV file
 output_df.to_csv(OUTPUT_PATH, index=False)
+
+def main():
+    print("Starting script...")
+    query_llm, parser_llm = initializeLLMs(QUERY_MODEL, QUERY_TEMPERATURE, PARSER_MODEL, PARSER_TEMPERATURE)
+    print("Loaded model successfully")
+
+
+
+if __name__ == "__main__":
+    main()
