@@ -11,10 +11,10 @@ from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
 from pydantic import BaseModel, Field
 from typing import List
 import json
-from config import MODEL, TEMPERATURE, EXAMPLE_PATH, QUERY_LANGUAGE, QUERIES_PATH, CHUNK_SIZE, OUTPUT_PATH, OPENAI_API_KEY
+from config import QUERY_MODEL, QUERY_TEMPERATURE, EXAMPLE_PATH, QUERY_LANGUAGE, QUERIES_PATH, CHUNK_SIZE, OUTPUT_PATH, OPENAI_API_KEY
 
 print("Starting script...")
-chat = ChatOpenAI(model=MODEL, temperature=TEMPERATURE)
+chat = ChatOpenAI(model=QUERY_MODEL, temperature=QUERY_TEMPERATURE)
 print("Loaded model successfully")
 # Define your desired data structure.
 class OptimizedQuery(BaseModel):

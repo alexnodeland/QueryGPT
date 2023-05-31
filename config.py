@@ -6,8 +6,10 @@ This file contains all the configuration variables for the project.
 
 # OpenAI Configuration
 OPENAI_API_KEY= os.getenv("OPENAI_API_KEY")
-MODEL = "gpt-4"
-TEMPERATURE = 0.9
+QUERY_MODEL = "gpt-4"
+QUERY_TEMPERATURE = 0.9
+PARSER_MODEL = "gpt-3.5-turbo"
+PARSER_TEMPERATURE = 0.0
 
 # Prompt Configuration
 EXAMPLE_PATH = "example_query.csv"
