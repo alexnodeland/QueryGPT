@@ -10,7 +10,6 @@ from config import (
     PARSER_TEMPERATURE, 
     EXAMPLE_PATH, 
     QUERY_LANGUAGE, 
-    PROMPT_TEMPLATE,
     QUERIES_PATH, 
     CHUNK_SIZE, 
     OUTPUT_PATH, 
@@ -46,7 +45,7 @@ def main():
 
     query_chunks, file_chunks = loadQueries(QUERIES_PATH, CHUNK_SIZE)
 
-    chat_prompt = buildPrompt(PROMPT_TEMPLATE)
+    chat_prompt = buildPrompt()
 
     output_df = process_all_query_chunks(query_llm, QUERY_LANGUAGE, chat_prompt, query_chunks, file_chunks, format_instructions, example_input, example_output, parser, fixing_parser)
 
