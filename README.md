@@ -13,7 +13,6 @@ This repository contains a Python application that uses the Langchain library to
 1. Clone the repository
     ```sh
     git clone https://github.com/alexnodeland/querygpt.git
-    cd QueryGPT
     ```
 2. Install the required packages
     ```sh
@@ -28,7 +27,11 @@ This repository contains a Python application that uses the Langchain library to
 ## Usage
 
 1. Update the config.py file with your configuration settings.
-2. Run the application
+2. Navigate to the directory of the project which contains the main.py file.
+    ```sh
+    cd querygpt/src
+    ```
+3. Run the application
     ```sh
     python main.py
     ```
@@ -48,4 +51,4 @@ If you have any questions or feedback, please open an issue on GitHub.
 
 ## Acknowledgements
 
-This project uses the Langchain library to optimize SQL queries.
+This project uses the [Langchain](https://github.com/hwchase17/langchain) library to optimize SQL queries.
