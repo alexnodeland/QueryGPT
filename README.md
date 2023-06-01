@@ -25,7 +25,7 @@ This repository contains a Python application that uses the Langchain library to
     ```
     Replace your-api-key with your actual OpenAI API key.
 
-### Usage
+## Usage
 
 1. Update the config.py file with your configuration settings.
 2. Run the application
@@ -34,18 +34,18 @@ This repository contains a Python application that uses the Langchain library to
     ```
     The script will read the queries from the CSV file specified in config.py, optimize the queries using Langchain, and write the optimized queries and notes to the output CSV file specified in config.py.
 
-### Contributing
+## Contributing
 
 I welcome contributions to this project. Please feel free to submit a pull request or open an issue on GitHub.
 
-### License
+## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-### Contact
+## Contact
 
 If you have any questions or feedback, please open an issue on GitHub.
 
-### Acknowledgements
+## Acknowledgements
 
 This project uses the Langchain library to optimize SQL queries.
