@@ -99,21 +99,13 @@ def loadExample(example_path):
     example_path (str): The path to the CSV file.
 
     Returns:
-    tuple: A tuple containing the example input and output.
-    """
-    """
-    # Load prompt example
-    print("\nLoading prompt example...")
-    example = pd.read_csv(example_path)
-
-    # Set prompt variables
-    print("Setting prompt variables...")
-    example_input = '\n\n'.join(example['query'].apply(str).tolist())
-    example_output = example[['query_optimized', 'note']].to_json(orient='records')
+    tuple: A tuple containing the example input and output. 
     """
 
     print("\nLoading prompt example...")
     example = pd.read_csv(example_path)
+#   example_input = '\n\n'.join(example['query'].apply(str).tolist())
+#   example_output = example[['query_optimized', 'note']].to_json(orient='records')
     example_query_a = str(example['query'][0])
     example_query_optimized_a = str(example['query_optimized'][0])
     example_note_a = str(example['note'][0])
