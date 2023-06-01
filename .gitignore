@@ -1,7 +1,5 @@
 # Project files
-/example_query.csv
-/queries.csv
-/output.csv
+data/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

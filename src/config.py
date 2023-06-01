@@ -12,7 +12,7 @@ PARSER_MODEL = "gpt-3.5-turbo"
 PARSER_TEMPERATURE = 0.0
 
 # Prompt Configuration
-EXAMPLE_PATH = "example_query.csv"
+EXAMPLE_PATH = "../data/example_query.csv"
 QUERY_LANGUAGE = "Cypher"
 PROMPT_TEMPLATE = (
     "As an AI assistant, your task is to optimize database queries. Given a {query_language} query, "
@@ -23,8 +23,8 @@ PROMPT_TEMPLATE = (
 )
 
 # File Configuration
-QUERIES_PATH = "queries.csv"
-OUTPUT_PATH = "output.csv"
+QUERIES_PATH = "../data/queries.csv"
+OUTPUT_PATH = "../data/output.csv"
 
 # Processing Configuration
 CHUNK_SIZE = 2

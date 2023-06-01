@@ -1,95 +1,6 @@
 import json
-from typing import List
-from pydantic import BaseModel, Field
 import pandas as pd
 from langchain import LLMChain
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts.chat import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-)
-from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
-from config import (
-    QUERY_MODEL, 
-    QUERY_TEMPERATURE, 
-    PARSER_MODEL, 
-    PARSER_TEMPERATURE, 
-    EXAMPLE_PATH, 
-    QUERY_LANGUAGE,
-    PROMPT_TEMPLATE, 
-    QUERIES_PATH, 
-    CHUNK_SIZE, 
-    OUTPUT_PATH, 
-    OPENAI_API_KEY
-)
-
-def initializeLLMs(query_model, query_temperature, parser_model, parser_temperature):
-    """
-    Initialize the language models for query and parser.
-
-    Parameters:
-    query_model (str): The model to use for the query.
-    query_temperature (float): The temperature to use for the query.
-    parser_model (str): The model to use for the parser.
-    parser_temperature (float): The temperature to use for the parser.
-
-    Returns:
-    tuple: A tuple containing the query and parser language models.
-    """
-    query_llm = ChatOpenAI(model=QUERY_MODEL, temperature=QUERY_TEMPERATURE)
-#   parser_llm = ChatOpenAI(model=PARSER_MODEL, temperature=PARSER_TEMPERATURE)
-    parser_llm = ChatOpenAI()
-    return query_llm, parser_llm
-
-# Define your desired data structure.
-class OptimizedQuery(BaseModel):
-    query_optimized: str = Field(description="optimized database query")
-    note: str = Field(description="notes about optimization process")
-class OptimizedQueries(BaseModel):
-    queries: List[OptimizedQuery] = Field(description="list of optimized database queries")
-
-def configureParsers(parser_llm):
-    """
-    Configure the parsers.
-
-    Parameters:
-    parser_llm (ChatOpenAI): The language model to use for the parser.
-
-    Returns:
-    tuple: A tuple containing the parser, fixing parser, and format instructions.
-    """
-    print("Setting up parser...")
-    parser = PydanticOutputParser(pydantic_object=OptimizedQueries)
-
-    format_instructions = parser.get_format_instructions()
-    print("Parser set up successfully, format instructions: \n\n", format_instructions)
-    
-#   fixing_parser = OutputFixingParser.from_llm(parser=parser, llm=parser_llm)
-    fixing_parser = OutputFixingParser.from_llm(parser=parser, llm=ChatOpenAI())
-    print("\nFixing parser set up successfully")
-
-    return parser, fixing_parser, format_instructions
-
-def buildPrompt(prompt_template):
-    """
-    Build the chat prompt.
-
-    Parameters:
-    template (str): The template for the system message prompt.
-    example_input (str): The example input for the chat prompt.
-    example_output (str): The example output for the chat prompt.
-    queries (str): The queries for the human message prompt.
-
-    Returns:
-    ChatPromptTemplate: The chat prompt template.
-    """
-    system_message_prompt = SystemMessagePromptTemplate.from_template(prompt_template)
-    example_human = SystemMessagePromptTemplate.from_template("{example_input}", additional_kwargs={"name": "example_user"})
-    example_ai = SystemMessagePromptTemplate.from_template("{example_output}", additional_kwargs={"name": "example_assistant"})
-    human_message_prompt = HumanMessagePromptTemplate.from_template("{queries}")
-    chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, example_human, example_ai, human_message_prompt])
-    return chat_prompt
 
 def loadExample(example_path):
     """
@@ -126,7 +37,7 @@ def loadExample(example_path):
 
     return example_input, example_output
 
-def loadQueries(queries_path):
+def loadQueries(queries_path, chunk_size):
     """
     Load the queries from a CSV file.
 
@@ -144,12 +55,12 @@ def loadQueries(queries_path):
 
     # Chunk queries into groups of CHUNK_SIZE
     print("Chunking queries...")
-    query_chunks = [queries[i:i + CHUNK_SIZE] for i in range(0, len(queries), CHUNK_SIZE)]
-    file_chunks = [files[i:i + CHUNK_SIZE] for i in range(0, len(files), CHUNK_SIZE)]
+    query_chunks = [queries[i:i + chunk_size] for i in range(0, len(queries), chunk_size)]
+    file_chunks = [files[i:i + chunk_size] for i in range(0, len(files), chunk_size)]
     
     return query_chunks, file_chunks
 
-def process_query_chunk(query_llm, chat_prompt, query_chunk, format_instructions, example_input, example_output):
+def process_query_chunk(query_llm, query_language, chat_prompt, query_chunk, format_instructions, example_input, example_output):
     """
     Process a chunk of queries.
 
@@ -166,7 +77,7 @@ def process_query_chunk(query_llm, chat_prompt, query_chunk, format_instructions
     """
     queries_formatted = "\n\n".join(query_chunk)
     chain = LLMChain(llm=query_llm, prompt=chat_prompt)
-    output = chain.run(query_language=QUERY_LANGUAGE, format_instructions=format_instructions, example_input=example_input, example_output=example_output, queries=queries_formatted)
+    output = chain.run(query_language=query_language, format_instructions=format_instructions, example_input=example_input, example_output=example_output, queries=queries_formatted)
     return output
 
 def parse_output(output, parser, fixing_parser):
@@ -212,7 +123,7 @@ def append_to_output_df(output_df, query_chunk, file_chunk, output_parsed):
         output_df = pd.concat([output_df, new_row], ignore_index=True)
     return output_df
 
-def process_all_query_chunks(query_llm, chat_prompt, query_chunks, file_chunks, format_instructions, example_input, example_output, parser, fixing_parser):
+def process_all_query_chunks(query_llm, query_language, chat_prompt, query_chunks, file_chunks, format_instructions, example_input, example_output, parser, fixing_parser):
     """
     Process all query chunks.
 
@@ -232,7 +143,7 @@ def process_all_query_chunks(query_llm, chat_prompt, query_chunks, file_chunks, 
     """
     output_df = pd.DataFrame(columns=["query", "file", "query_optimized", "note"])
     for query_chunk, file_chunk in zip(query_chunks, file_chunks):
-        output = process_query_chunk(query_llm, chat_prompt, query_chunk, format_instructions, example_input, example_output)
+        output = process_query_chunk(query_llm, query_language, chat_prompt, query_chunk, format_instructions, example_input, example_output)
         output_parsed = parse_output(output, parser, fixing_parser)
         output_df = append_to_output_df(output_df, query_chunk, file_chunk, output_parsed)
     return output_df
@@ -246,24 +157,3 @@ def save_output(output_df, output_path):
     output_path (str): The path to the CSV file.
     """
     output_df.to_csv(output_path, index=False)
-
-def main():
-    print("Starting script...")
-    query_llm, parser_llm = initializeLLMs(QUERY_MODEL, QUERY_TEMPERATURE, PARSER_MODEL, PARSER_TEMPERATURE)
-    print("Loaded model successfully")
-
-    parser, fixing_parser, format_instructions = configureParsers(parser_llm)
-
-    example_input, example_output = loadExample(EXAMPLE_PATH)
-
-    query_chunks, file_chunks = loadQueries(QUERIES_PATH)
-
-    chat_prompt = buildPrompt(PROMPT_TEMPLATE)
-
-    output_df = process_all_query_chunks(query_llm, chat_prompt, query_chunks, file_chunks, format_instructions, example_input, example_output, parser, fixing_parser)
-
-    save_output(output_df, OUTPUT_PATH)
-
-
-if __name__ == "__main__":
-    main()
